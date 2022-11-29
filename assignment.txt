@@ -1,0 +1,378 @@
+//npx create-react-app folderName
+//backend eke npm init ghnw
+//npm i mongoose express dotenv cors nodemon
+
+
+
+//Backend
+//index.js
+
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const app = express();
+const bodyParser = require("body-parser");
+const { request, response } = require("express");
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.json());
+dotenv.config();
+
+const URL = process.env.MONGODB_URL;
+
+mongoose.connect(URL, {
+
+})
+.then(() => {
+    console.log("Connected to database");
+})
+.catch((err) => console.log(err));
+
+app.get("/", (req, res) => {
+    res.send("Welcome to SyncTax");
+    console.log(process.env.PORT);
+});
+
+const studentRoute = require("./routes/Student");
+app.use("/api/student", studentRoute);
+
+
+app.listen(process.env.PORT || 5000, () => 
+    console.log(`Server started ${process.env.PORT}`)
+);
+
+
+//models
+
+const mongoose = require('mongoose')
+
+const StudentSchema = new mongoose.Schema({
+    fullName: { type: String, required:true},
+    email:{ type:String, required:true},
+    phoneNumber: { type:Number, required:true},
+    address: { type:String, required:true},
+    province: { type:String, require:true},
+    gender: { type:String, required:true}
+},
+{ timestamps: true },
+);
+
+module.exports = mongoose.model("Student", StudentSchema )
+
+
+//routes
+
+const router = require("express").Router();
+const {addStudent} = require("../controller/studentDetails");
+const student = require("../models/StudentModel");
+
+
+router.post("/add", addStudent);
+
+module.exports = router;
+
+//controller
+
+const Student = require("../models/StudentModel");
+
+const addStudent = async(req,res) => {
+    const studentExist = await Student.findOne({
+        email: req.body.email,
+    });
+
+    if(studentExist){
+        return res.status(400).send({message: "Already Exist"});
+    }
+
+    const student = new Student({
+        fullName: req.body.fullName,
+        email: req.body.email,
+        phoneNumber: req.body.phoneNumber,
+        address: req.body.address,
+        province: req.body.province,
+        gender: req.body.gender,
+    });
+
+    try{
+
+    const savedStudent = await student.save();
+    console.log("Saved Successfully");
+    res.status(200).json(savedStudent);
+    }
+    catch(error){
+        res.status(400).json({message: error});
+        console.log(error);
+    }
+};
+
+module.exports = {
+addStudent,
+};
+
+
+//package json
+
+ "start": "nodemon index.js"
+
+
+//.env
+
+MONGODB_URL = mongodb+srv://CareForU:careMongo@onlinelab.x7wd02p.mongodb.net/StudentRegistration?retryWrites=true&w=majority
+PORT = 5000
+TOKEN_SECRET=STUDENTLOGIN
+
+
+
+//FRONTEND
+
+//Components
+//index.jsx
+
+
+import React from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+
+function AddStudent() {
+	
+	const [fullName, setFullName] = useState("");
+	const [email, setEmail] = useState("");
+	const [phoneNumber, setPhoneNumber] = useState("");
+	const [address, setAddress] = useState("");
+	const [province, setProvince] = useState("");
+	const [gender, setGender] = useState("");
+
+
+	const onSubmit = async (e) => {
+		e.preventDefault();
+
+		try {
+			await axios
+				.post("http://localhost:5000/api/student/add", {
+					fullName: fullName,
+					email: email,
+					phoneNumber: phoneNumber,
+					address: address,
+					province: province,
+					gender: gender,
+				})
+				.then((res) => {
+					console.log("add student", res);
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	return (
+		<>
+		<style>
+		
+		</style>
+			<form onSubmit={onSubmit}						>
+				<div class="mb-6">
+					<label
+						for="email"
+						class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+						Full Name
+					</label>
+					<input style={{width: 550}}
+						type="name"
+						id="name"
+						class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+						placeholder=""
+						onChange={(e) => setFullName(e.target.value)}
+						required
+					/>
+					 {/* <input type="text" id="base-input" 
+					 onChange={(e) => setFullName(e.target.value)}
+					 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"/> */}
+				</div>
+				<div class="mb-6">
+					<label
+						for="email"
+						class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+						Email Address
+					</label>
+					<input
+						type="email"
+						id="email"
+						class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+						onChange={(e) => setEmail(e.target.value)}
+						required
+					/>
+				</div>
+				<div class="mb-6">
+					<label
+						for="repeat-password"
+						class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+						Phone Number
+					</label>
+					<input
+						type="phoneNumber"
+						id="phoneNumber"
+						class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+						onChange={(e) => setPhoneNumber(e.target.value)}
+						required
+					/>
+				</div>
+				<div class="mb-6">
+					<label
+						for="repeat-password"
+						class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+						Address
+					</label>
+					<input
+						type="address"
+						id="address"
+						class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+						onChange={(e) => setAddress(e.target.value)}
+						required
+					/>
+				</div>
+				<div class="mb-6">
+					<label
+						for="countries"
+						class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+						Province
+					</label>
+					<select
+						id="countries"
+						onChange={(e) => {
+							const selected = e.target.value;
+							setProvince(selected);
+						}}
+						class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+						<option>Western</option>
+						<option>North</option>
+						<option>South</option>
+						<option>Easten</option>
+					</select>
+				</div>
+				<div class="mb-6">
+					<label
+						for="repeat-password"
+						class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+						Gender
+					</label>
+
+					<div class="flex items-center mb-4">
+						<input
+							id="radio-Male"
+							type="radio"
+							value="male"
+							name="list-radio"
+							class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 focus:ring-2"
+							onChange={(e) => setGender(e.target.value)}
+						/>
+						<label
+							for="default-radio-1"
+							class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+							Male
+						</label>
+					</div>
+					<div class="flex items-center">
+						<input
+							id="radio-Male"
+							type="radio"
+							value="male"
+							name="list-radio"
+							class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 focus:ring-2"
+							onChange={(e) => setGender(e.target.value)}
+						/>
+						<label
+							for="default-radio-2"
+							class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+							Female
+						</label>
+					</div>
+				</div>
+
+				<button
+					type="submit"
+					class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+					Register
+				</button>
+			</form>
+	
+		</>
+	);
+}
+export default AddStudent;
+
+
+
+//PAGES wl index jsx
+
+
+import AddStudent from "./../Components/index";
+
+export {
+    AddStudent,
+};
+
+
+//ROUTES
+
+import React from 'react'
+import AddStudent from '../Components/index'
+import { BrowserRouter, Routes, Route} from 'react-router-dom'
+
+const PagesRoutes = () => {
+    return(
+        <div>
+            <BrowserRouter>
+            <Routes>
+                <Route path='/student/add' element={<AddStudent/>}></Route>
+            </Routes>
+            </BrowserRouter>
+        </div>
+    )
+}
+
+export default PagesRoutes
+
+
+//App.js
+
+import './App.css';
+import PagesRoutes from './Routes';
+
+function App() {
+  return (
+    <div className="App">
+      <header className="App-header">
+        <PagesRoutes/>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+
+
+//index.css
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+//tailwind.config.js
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
